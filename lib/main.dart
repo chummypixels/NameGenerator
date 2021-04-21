@@ -12,6 +12,7 @@ class MyApp extends StatelessWidget {
     final wordPair = WordPair.random();
     return MaterialApp(
       title: 'Tease Name Generator',
+      theme: ThemeData(primaryColor: Colors.white),
       home: RandomWords(),
     );
   }
@@ -24,6 +25,7 @@ class RandomWords extends StatefulWidget {
 
 class _RandomWordsState extends State<RandomWords> {
   final _suggestions = <WordPair>[];
+  final _saved = <WordPair>{};
   @override
   Widget build(BuildContext context) {
     // final wordPair = WordPair.random();
@@ -31,6 +33,7 @@ class _RandomWordsState extends State<RandomWords> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Startup Name Generator'),
+        actions: [IconButton(icon: Icon(Icons.list), onPressed: _pushSaved)],
       ),
       body: _buildSuggestions(),
     );
@@ -48,13 +51,60 @@ class _RandomWordsState extends State<RandomWords> {
       return _buildRow(_suggestions[index]);
     });
   }
-}
 
-Widget _buildRow(WordPair pair) {
-  return ListTile(
-    title: Text(
-      pair.asPascalCase,
-      style: TextStyle(fontSize: 18.0),
-    ),
-  );
+  Widget _buildRow(WordPair pair) {
+    final alreadySaved = _saved.contains(pair);
+    return ListTile(
+      title: Text(
+        pair.asPascalCase,
+        style: TextStyle(fontSize: 18.0),
+      ),
+      trailing: Icon(
+        alreadySaved ? Icons.favorite : Icons.favorite_border,
+        color: alreadySaved ? Colors.red : null,
+      ),
+      onTap: () {
+        if (alreadySaved) {
+          setState(() {
+            _saved.remove(pair);
+          });
+        } else {
+          setState(() {
+            _saved.add(pair);
+          });
+        }
+      },
+    );
+  }
+
+  void _pushSaved() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (BuildContext context) {
+          final tiles = _saved.map(
+            (WordPair pair) {
+              return ListTile(
+                title: Text(
+                  pair.asPascalCase,
+                  style: TextStyle(fontSize: 18.0),
+                ),
+              );
+            },
+          );
+          final divided = ListTile.divideTiles(
+            context: context,
+            tiles: tiles,
+          ).toList();
+          return Scaffold(
+            appBar: AppBar(
+              title: Text('Saved Suggestions'),
+            ),
+            body: ListView(
+              children: divided,
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
